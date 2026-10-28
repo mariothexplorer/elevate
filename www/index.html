@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Elevate</title>
+<style>
+:root{--bg:#f3efe6;--card:#fffdf8;--ink:#1d2a2a;--mut:#5d6b6b;--acc:#0f6e6e;--acc2:#e8a317;--bad:#b3261e;--line:#d8d2c4;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121a1a;--card:#1b2626;--ink:#eef2ee;--mut:#9fb0ad;--acc:#4fc3bd;--acc2:#f0b84a;--bad:#ff8a80;--line:#2f3f3e}}
+*{box-sizing:inherit}html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font:16px/1.5 "Trebuchet MS",Verdana,sans-serif;display:flex;justify-content:center}
+#app{width:100%;max-width:430px;min-height:100vh;padding:28px 22px 90px;position:relative}
+h1{font:700 34px/1.1 Georgia,"Times New Roman",serif;margin:0 0 4px;letter-spacing:-.5px}
+.brand{font:700 15px Georgia,serif;color:var(--acc);margin-bottom:34px}
+h2{font:700 26px/1.2 Georgia,serif;margin:0 0 22px}
+label{display:block;font-size:14px;color:var(--mut);margin:14px 0 4px}
+input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit}
+input:focus,button:focus-visible{outline:3px solid var(--acc2);outline-offset:1px}
+.row{display:flex;gap:12px;margin-top:24px}
+button{font:inherit;font-weight:700;padding:13px 16px;border-radius:10px;border:1.5px solid var(--acc);background:var(--acc);color:#fff;cursor:pointer;flex:1}
+button.sec{background:transparent;color:var(--acc)}
+button.link{border:0;background:none;color:var(--mut);text-decoration:underline;flex:none;padding:14px 0;font-weight:400}
+.err{color:var(--bad);min-height:24px;margin-top:12px;font-weight:700}
+.q{padding:15px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);margin-bottom:10px;width:100%;text-align:left;color:var(--ink);font-weight:400}
+.quest{background:var(--card);border:1.5px solid var(--line);border-left:6px solid var(--acc2);border-radius:12px;padding:22px;margin:8px 0 18px}
+.quest b{display:block;font:700 22px/1.3 Georgia,serif;margin:6px 0 14px}
+.time{font-variant-numeric:tabular-nums;font-size:26px;font-weight:700;color:var(--acc)}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;display:flex;background:var(--card);border-top:1.5px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav button{border:0;background:none;color:var(--mut);border-radius:0;padding:18px}
+.nav button.on{color:var(--acc);box-shadow:inset 0 3px 0 var(--acc)}
+.stat{font:700 44px Georgia,serif;color:var(--acc)}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:24px;z-index:50}
+.box{background:var(--card);border-radius:14px;padding:24px;max-width:380px;width:100%}
+.box p{margin:0 0 6px}
+.mail{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:calc(100% - 20px);max-width:410px;background:var(--ink);color:var(--bg);border-radius:12px;padding:12px 14px;font-size:14px;z-index:60}
+.mail button{margin-top:8px;padding:8px 12px;background:var(--acc2);border-color:var(--acc2);color:#111;flex:none}
+.note{font-size:12px;color:var(--mut);margin-top:30px}
+</style></head><body><div id="app"></div><div id="mail"></div><div id="ov"></div>
+<script>
+const APP="Elevate",QS=["Talk to someone new and learn one thing about them.","Take a different route and notice three new details.","Try a food you have never eaten before.","Write a note of thanks to someone and deliver it.","Spend 20 minutes learning the basics of a new skill.","Visit a place in your town you have never been to.","Take a photo of something beautiful and unnoticed.","Listen to a music genre you usually skip, all the way through.","Ask a friend to teach you something they love.","Do something kind for a stranger, without being asked.","Sketch what you see from your window for 10 minutes.","Read a page from a book outside your usual topics."];
+const QUIZ=[["What do you enjoy most?",["Being outdoors","Creating things","Meeting people","Learning"]],["Your ideal free evening?",["Walk or sport","Hobby project","Out with friends","Book or documentary"]],["How adventurous are you?",["Very","Somewhat","A little","Not yet"]],["Pick a setting:",["Forest","Studio","Café","Library"]],["How social do you feel?",["Very","Mostly","Sometimes","Rarely"]],["Time you can spare daily?",["10 min","20 min","1 hour","More"]],["Which sounds best?",["Explore a city","Make something","Join a group","Master a skill"]],["Your comfort zone is…",["Wide","Medium","Small","Tiny"]],["What would you like to try?",["Sports","Arts","Cooking","Tech"]],["Why use Elevate?",["Fun","Growth","Meet people","Break routine"]]];
+let mem={};const store={get(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):mem[k]}catch(e){return mem[k]}},set(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const users=()=>store.get("el_users")||{};const save=u=>store.set("el_users",u);
+let S={cur:null,pend:null,qi:0,ans:[],tick:null,timer:null,code:null};
+const $=s=>document.querySelector(s),app=$("#app");
+function mail(txt,btn,fn){$("#mail").innerHTML=`<div class="mail">${txt}<br><button id="mb">${btn||"Close"}</button></div>`;$("#mb").onclick=()=>{$("#mail").innerHTML="";fn&&fn()}}
+function modal(h){$("#ov").innerHTML=`<div class="ov"><div class="box">${h}</div></div>`}
+const close=()=>$("#ov").innerHTML="";
+const alertBox=(t,fn)=>{modal(`<p>${t}</p><div class="row"><button id="ok">OK</button></div>`);$("#ok").onclick=()=>{close();fn&&fn()}};
+const confirmBox=(t,yes)=>{modal(`<p>${t}</p><div class="row"><button class="sec" id="no">No</button><button id="yes">Yes</button></div>`);$("#no").onclick=close;$("#yes").onclick=()=>{close();yes()}};
+const gen=()=>String(Math.floor(100000+Math.random()*900000));
+function codeBox(email,onOk){S.code=gen();mail(`Your verification code is: ${S.code}. All the best, the team of the ${APP} App.<br><small>(Demo inbox for ${email})</small>`);
+modal(`<p>Please type the verification code sent to your email address. Do not forget to check the Spam/Junk folder.</p><input id="cd" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code"><div class="err" id="ce"></div><div class="row"><button class="sec" id="cc">Cancel</button><button id="cv">Verify</button></div>`);
+$("#cc").onclick=close;$("#cd").oninput=e=>e.target.value=e.target.value.replace(/\D/g,"");
+$("#cv").onclick=()=>{if($("#cd").value===S.code){$("#mail").innerHTML="";close();onOk()}else{$("#ce").textContent=onOk.chg?"Check the code again":"Please check the code again";$("#cd").value=""}}}
+function stop(){clearInterval(S.tick);clearTimeout(S.timer)}
+function login(){stop();S.cur=null;app.innerHTML=`<div class="brand">${APP}</div><h1>Welcome back!</h1><label for="e">Email</label><input id="e" type="email" autocomplete="email"><label for="p">Password</label><input id="p" type="password"><div class="err" id="er"></div><div class="row"><button class="sec" id="su">Sign up</button><button id="li">Log In</button></div><button class="link" id="fp">Forgotten password</button>`;
+$("#su").onclick=signup;
+$("#li").onclick=()=>{const u=users()[$("#e").value.trim().toLowerCase()];if(u&&u.pass===$("#p").value){S.cur=$("#e").value.trim().toLowerCase();dash()}else $("#er").textContent="Wrong credentials!"};
+$("#fp").onclick=()=>{const em=$("#e").value.trim().toLowerCase();if(users()[em]){alertBox("Please check your inbox for a link to reset your password. Do not forget to check your Spam/Junk folder.");mail(`Reset your ${APP} password: tap the link below.`,"Open reset link",()=>reset(em))}else alertBox("Please click the sign-up window and create an account.")}}
+function reset(em){app.innerHTML=`<div class="brand">${APP}</div><h1>Reset your password:</h1><label>Email</label><input value="${em}" disabled><label for="p">New password</label><input id="p" type="password"><div class="row"><button id="rs">Reset password</button></div>`;
+$("#rs").onclick=()=>{const p=$("#p").value;if(p.length<4)return alertBox("Password must be at least 4 characters.");const u=users();u[em].pass=p;save(u);alertBox("Your password has been changed",login)}}
+function signup(){app.innerHTML=`<div class="brand">${APP}</div><h1>Welcome onboard!</h1><label for="n">Name</label><input id="n" autocomplete="name"><label for="e">Email</label><input id="e" type="email"><label for="p">Password</label><input id="p" type="password"><div class="err" id="er"></div><div class="row"><button class="sec" id="li">Log In</button><button id="su">Sign up</button></div>`;
+$("#li").onclick=login;
+$("#su").onclick=()=>{const n=$("#n").value.trim(),e=$("#e").value.trim().toLowerCase(),p=$("#p").value;
+if(!n||!/^\S+@\S+\.\S+$/.test(e)||p.length<4)return $("#er").textContent="Enter a name, a valid email and a password of 4+ characters.";
+if(users()[e])return $("#er").textContent="This email already has an account. Tap Log In.";
+codeBox(e,()=>{S.pend={n,e,p};S.qi=0;S.ans=[];quiz()})}}
+function quiz(){const[q,o]=QUIZ[S.qi];app.innerHTML=`<div class="brand">${APP}</div><h2>${q}</h2>${o.map((x,i)=>`<button class="q" data-i="${i}">${x}</button>`).join("")}<p class="note" style="text-align:right;font-size:15px">${S.qi+1}/10</p>`;
+app.querySelectorAll(".q").forEach(b=>b.onclick=()=>{S.ans.push(+b.dataset.i);if(++S.qi<10)quiz();else{const u=users();u[S.pend.e]={name:S.pend.n,pass:S.pend.p,ans:S.ans,done:0,q:null};save(u);S.cur=S.pend.e;S.pend=null;alertBox("Account complete",dash)}})}
+function me(){return users()[S.cur]}
+function upd(f){const u=users();f(u[S.cur]);save(u)}
+function schedule(){clearTimeout(S.timer);S.timer=setTimeout(()=>{if(!S.cur||me().q)return;const t=QS[Math.floor(Math.random()*QS.length)];upd(u=>u.q={t,end:Date.now()+864e5,rev:false});dash()},8000)}
+function nav(on){return`<div class="nav"><button class="${on=="d"?"on":""}" id="nd">Dashboard</button><button class="${on=="a"?"on":""}" id="na">Account</button></div>`}
+function dash(){stop();let u=me();if(u.q&&u.q.end<Date.now()){upd(x=>x.q=null);u=me()}
+let body;if(!u.q){body=`<div class="quest"><b>Still waiting for your side quest</b><span style="color:var(--mut)">A new one will arrive at a random moment. (Demo: within a few seconds.)</span></div>`;schedule()}
+else if(!u.q.rev){body=`<div class="quest"><b>Your new side quest is ready!</b><button id="rv">Reveal</button></div>`;mail(`${APP}: You have a new side quest. Open the app to reveal it.`,"Open app")}
+else body=`<div class="quest"><span style="color:var(--mut)">Today’s side quest is:</span><b>${u.q.t}</b><span style="color:var(--mut)">Time left to complete</span><div class="time" id="tl"></div></div><div class="row" style="margin-top:0"><button id="cp">Complete</button></div>`;
+app.innerHTML=`<div class="brand">${APP}</div><h1>Hello, ${u.name}!</h1><p style="color:var(--mut);margin:0 0 18px">Step outside your comfort zone today.</p>${body}${nav("d")}`;
+$("#na").onclick=account;
+if($("#rv"))$("#rv").onclick=()=>{upd(x=>x.q.rev=true);$("#mail").innerHTML="";dash()};
+if($("#tl")){const f=()=>{const l=me().q.end-Date.now();if(l<=0){upd(x=>x.q=null);return dash()}const h=Math.floor(l/36e5),m=Math.floor(l%36e5/6e4),s=Math.floor(l%6e4/1e3);$("#tl").textContent=[h,m,s].map(v=>String(v).padStart(2,"0")).join(":")};f();S.tick=setInterval(f,1000);
+$("#cp").onclick=()=>{if(me().q.end<Date.now())return dash();upd(x=>{x.done++;x.q=null});alertBox("Side quest completed. Well done!",dash)}}}
+function account(){stop();const u=me();app.innerHTML=`<div class="brand">${APP}</div><label>Name</label><div style="font:700 22px Georgia,serif">${u.name}</div><label>Completed side quests</label><div class="stat">${u.done}</div><label>Email address</label><div style="font-weight:700;word-break:break-all">${S.cur}</div><div class="row"><button class="sec" id="ch">Change email</button><button class="sec" id="lo">Log out</button></div>${nav("a")}`;
+$("#nd").onclick=dash;
+$("#lo").onclick=()=>confirmBox("Are you sure you want to log out of your account?",login);
+$("#ch").onclick=()=>confirmBox("Are you sure you want to change your email?",()=>{
+modal(`<p><b>Enter new email address</b></p><input id="ne" type="email"><div class="err" id="ee"></div><div class="row"><button class="sec" id="x">Cancel</button><button id="go">OK</button></div>`);$("#x").onclick=close;
+$("#go").onclick=()=>{const ne=$("#ne").value.trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(ne))return $("#ee").textContent="Enter a valid email address.";if(users()[ne])return $("#ee").textContent="This email is already in use.";
+close();const ok=()=>{const us=users();us[ne]=us[S.cur];delete us[S.cur];save(us);S.cur=ne;account()};ok.chg=1;codeBox(ne,ok)}})}
+login();
+</script></body></html>
