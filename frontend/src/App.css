@@ -77,6 +77,32 @@
   font-size: 12px;
 }
 
+.profile-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sign-out-button {
+  padding: 8px 0 8px 12px;
+  border: 0;
+  border-left: 1px solid var(--line);
+  color: #77716a;
+  background: transparent;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.sign-out-button:hover:not(:disabled) {
+  color: var(--plum);
+}
+
+.sign-out-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 .profile-avatar,
 .avatar-stack i {
   display: grid;
@@ -1220,6 +1246,88 @@ main {
   transform: rotate(-90deg);
 }
 
+.footer-tools {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.privacy-settings {
+  position: relative;
+}
+
+.privacy-settings summary {
+  color: #77716a;
+  cursor: pointer;
+  font-size: 9px;
+  list-style: none;
+}
+
+.privacy-settings summary::-webkit-details-marker {
+  display: none;
+}
+
+.privacy-settings summary::after {
+  display: inline-block;
+  margin-left: 6px;
+  color: #a28b77;
+  content: '+';
+  font-size: 12px;
+}
+
+.privacy-settings[open] summary::after {
+  content: '−';
+}
+
+.privacy-settings-popover {
+  position: absolute;
+  z-index: 10;
+  right: 0;
+  bottom: calc(100% + 13px);
+  display: grid;
+  width: min(290px, calc(100vw - 36px));
+  gap: 9px;
+  padding: 17px;
+  border: 1px solid #e8e5de;
+  border-radius: 8px;
+  background: #fffefa;
+  box-shadow: 0 12px 30px rgb(44 40 33 / 12%);
+}
+
+.privacy-settings-popover p {
+  margin: 0 0 3px;
+  color: #77736e;
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+.privacy-settings-popover button {
+  padding: 7px 0;
+  border: 0;
+  color: var(--plum);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.privacy-settings-popover button:hover {
+  color: #8d5f78;
+}
+
+.privacy-settings-popover button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.privacy-settings-popover .privacy-action-error {
+  margin: 3px 0 0;
+  color: #9c4a3c;
+  font-size: 9px;
+}
+
 @media (max-width: 1000px) {
   .app-shell {
     width: min(100% - 64px, 850px);
@@ -1302,6 +1410,15 @@ main {
   .profile-name,
   .profile-link > svg {
     display: none;
+  }
+
+  .profile-actions {
+    gap: 0;
+  }
+
+  .sign-out-button {
+    padding-left: 9px;
+    font-size: 9px;
   }
 
   .welcome-section {
@@ -1582,6 +1699,16 @@ main {
 
   .site-footer > span {
     display: none;
+  }
+
+  .footer-tools {
+    gap: 14px;
+  }
+
+  .privacy-settings summary {
+    max-width: 92px;
+    font-size: 8px;
+    line-height: 1.4;
   }
 }
 

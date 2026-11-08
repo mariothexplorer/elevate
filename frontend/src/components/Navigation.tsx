@@ -1,12 +1,17 @@
 import { Icon } from './Icon'
 
+type NavigationProps = {
+  onSignOut: () => void
+  signingOut: boolean
+}
+
 const links = [
   { label: 'Home', href: '#home' },
   { label: 'My quests', href: '#my-quests' },
   { label: 'Profile', href: '#profile' },
 ]
 
-export function Navigation() {
+export function Navigation({ onSignOut, signingOut }: NavigationProps) {
   return (
     <header className="topbar">
       <a className="brand" href="#home" aria-label="Elevate home">
@@ -24,11 +29,16 @@ export function Navigation() {
           </a>
         ))}
       </nav>
-      <a className="profile-link" href="#profile" aria-label="Your profile">
-        <span className="profile-avatar">M</span>
-        <span className="profile-name">Maya</span>
-        <Icon name="chevron-right" size={15} />
-      </a>
+      <div className="profile-actions">
+        <a className="profile-link" href="#profile" aria-label="Your profile">
+          <span className="profile-avatar">E</span>
+          <span className="profile-name">Your profile</span>
+          <Icon name="chevron-right" size={15} />
+        </a>
+        <button className="sign-out-button" disabled={signingOut} onClick={onSignOut} type="button">
+          {signingOut ? 'Signing out...' : 'Sign out'}
+        </button>
+      </div>
     </header>
   )
 }

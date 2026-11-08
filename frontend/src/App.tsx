@@ -1,12 +1,14 @@
-import BackendTest from "./BackendTest";
+import BackendTest from './BackendTest'
 import { useState } from 'react'
+import { AuthGate, type AuthSession } from './components/AuthGate'
 import { InterestPicker } from './components/InterestPicker'
 import { MyQuests } from './components/MyQuests'
 import { Navigation } from './components/Navigation'
+import { OnboardingFlow } from './components/OnboardingFlow'
 import { QuestCard } from './components/QuestCard'
 import { Icon } from './components/Icon'
 import { interests, sampleQuests } from './data/quests'
-import type { Quest } from './types'
+import type { OnboardingAnswers, Quest } from './types'
 import './App.css'
 
 type GeneratedQuestData = Pick<Quest, 'title' | 'description' | 'difficulty' | 'duration' | 'category'>
@@ -29,6 +31,14 @@ function isGeneratedQuest(data: unknown): data is GeneratedQuestData {
 }
 
 function App() {
+  return (
+    <AuthGate>
+      {(session) => <AuthenticatedApp session={session} />}
+    </AuthGate>
+  )
+}
+
+function AuthenticatedApp({ session }: { session: AuthSession }) {
   const [currentQuest, setCurrentQuest] = useState<Quest | null>({
     ...sampleQuests[0],
   })
@@ -49,13 +59,26 @@ function App() {
       const selectedInterestNames = interests
         .filter((interest) => selectedInterests.includes(interest.id))
         .map((interest) => interest.label)
+      const answeredOnboarding = Object.fromEntries(
+        Object.entries(session.profile.onboardingAnswers)
+          .filter(([, answer]) => typeof answer === 'string' && answer.trim().length > 0)
+          .map(([question, answer]) => [question, answer.trim()]),
+      )
+      const requestBody = {
+        interests: selectedInterestNames,
+        ...(Object.keys(answeredOnboarding).length > 0
+          ? { onboarding: answeredOnboarding }
+          : {}),
+      }
+      const idToken = await session.user.getIdToken()
 
       const response = await fetch('http://127.0.0.1:8000/generate-quest', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
         },
-        body: JSON.stringify({ interests: selectedInterestNames }),
+        body: JSON.stringify(requestBody),
       })
 
       if (!response.ok) {
@@ -108,9 +131,56 @@ function App() {
     setInterestsSaved(true)
   }
 
+  const [profileActionError, setProfileActionError] = useState<string | null>(null)
+
+  const completeOnboarding = (answers: OnboardingAnswers) => session.saveOnboarding(answers)
+
+  const restartOnboarding = async () => {
+    setProfileActionError(null)
+    try {
+      await session.restartOnboarding()
+    } catch {
+      setProfileActionError('Could not restart onboarding. Please check your connection and try again.')
+    }
+  }
+
+  const clearOnboardingAnswers = async () => {
+    setProfileActionError(null)
+    try {
+      await session.clearOnboarding()
+    } catch {
+      setProfileActionError('Could not clear your answers. Please check your connection and try again.')
+      return
+    }
+
+    try {
+      localStorage.removeItem('elevate-onboarding-v1')
+    } catch {
+      console.warn('Could not clear legacy local onboarding data from this browser.')
+    }
+  }
+
+  const handleSignOut = async () => {
+    setProfileActionError(null)
+    try {
+      await session.signOutUser()
+    } catch {
+      setProfileActionError('Could not sign out. Please try again.')
+    }
+  }
+
+  if (!session.profile.onboardingCompleted) {
+    return (
+      <OnboardingFlow
+        initialAnswers={session.profile.onboardingAnswers}
+        onComplete={completeOnboarding}
+      />
+    )
+  }
+
   return (
     <div className="app-shell">
-      <Navigation />
+      <Navigation onSignOut={() => void handleSignOut()} signingOut={session.signingOut} />
       <main>
         <section className="welcome-section" id="home">
           <div className="welcome-copy">
@@ -181,7 +251,21 @@ function App() {
           <span>ELEVATE</span>
         </a>
         <span>Make room for the unexpected.</span>
-        <a className="back-to-top" href="#home">Back to the beginning <Icon name="arrow-right" size={14} /></a>
+        <div className="footer-tools">
+          <a className="back-to-top" href="#home">Back to the beginning <Icon name="arrow-right" size={14} /></a>
+          <details className="privacy-settings">
+            <summary>Privacy &amp; onboarding</summary>
+            <div className="privacy-settings-popover">
+              <p>Your answers are stored in your signed-in Firestore profile. Relevant answers are sent to the AI service when you request a quest.</p>
+              <button disabled={session.signingOut} onClick={() => void restartOnboarding()} type="button">Restart onboarding</button>
+              <button disabled={session.signingOut} onClick={() => void clearOnboardingAnswers()} type="button">Clear my answers</button>
+              <button disabled={session.signingOut} onClick={() => void handleSignOut()} type="button">
+                {session.signingOut ? 'Signing out...' : 'Sign out'}
+              </button>
+              {profileActionError && <p className="privacy-action-error" role="alert">{profileActionError}</p>}
+            </div>
+          </details>
+        </div>
       </footer>
     <BackendTest />
 

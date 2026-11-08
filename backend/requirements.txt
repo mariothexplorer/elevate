@@ -1,0 +1,5 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+openai>=1.68
+python-dotenv>=1.0
+firebase-admin>=6.5,<8

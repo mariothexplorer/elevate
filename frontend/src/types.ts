@@ -15,3 +15,32 @@ export type Interest = {
   label: string
   icon: 'palette' | 'activity' | 'book' | 'leaf' | 'users' | 'sparkles' | 'compass' | 'landmark'
 }
+
+export type OnboardingQuestionId =
+  | 'personality'
+  | 'favoriteActivity'
+  | 'freeTime'
+  | 'comfortZone'
+  | 'selfImprovement'
+  | 'aspiration'
+  | 'desiredChange'
+  | 'fearOfMissingOut'
+  | 'proudMoment'
+  | 'futureSelf'
+
+export type OnboardingAnswers = Partial<Record<OnboardingQuestionId, string>>
+
+export type OnboardingQuestion =
+  | {
+      id: OnboardingQuestionId
+      part: 'general'
+      kind: 'choice'
+      prompt: string
+      options: { letter: 'A' | 'B' | 'C' | 'D'; label: string }[]
+    }
+  | {
+      id: OnboardingQuestionId
+      part: 'personal'
+      kind: 'text'
+      prompt: string
+    }
